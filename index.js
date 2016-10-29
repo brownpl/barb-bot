@@ -31,6 +31,10 @@ controller.on('bot_channel_join', function (bot, message) {
   bot.reply(message, "I'm here!")
 })
 
+controller.hears(['work'], ['ambient'], function (bot, message) {
+  bot.reply(message, 'Does someone have the job code for that?')
+})
+
 controller.hears(['hello', 'hi'], ['direct_mention'], function (bot, message) {
   bot.reply(message, 'Hello.')
 })
