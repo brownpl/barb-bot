@@ -1,6 +1,7 @@
 var Botkit = require('botkit')
 
 var token = process.env.SLACK_TOKEN
+var deck; 
 
 var controller = Botkit.slackbot({
 	// reconnect to Slack RTM when connection goes bad
@@ -81,3 +82,42 @@ controller.hears(['attachment'], ['direct_message', 'direct_mention'], function 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
 	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
 })
+
+conroller.hears('blackjack', ['direct_mention'], function(bot, message){
+	createDeck();
+
+	var response = "The first 5 cards are:\n";
+	for(var i=0; i<5;i++)
+	{
+		response += deck.pop()+"\n";
+	}
+	bot.reply(message, response);
+
+});
+
+
+function createDeck()
+{
+	var numbers = ['A','1','2','3','4','5','6','7','8','9','10','J','Q','K'];
+	var suits = [':hearts:',':clubs:',':spades:',':diamonds:'];
+	for(var i=0; i<suits.length; i++)
+	{
+		for(var j=0; i<numbers.length;j++)
+		{
+			deck.push(suits[i]+numbers[j]);
+		}
+	}
+	deck.shuffle();
+} 
+
+Array.prototype.shuffle = function() {
+	var i = this.length, j, temp;
+	if ( i == 0 ) return this;
+	while ( --i ) {
+		j = Math.floor( Math.random() * ( i + 1 ) );
+		temp = this[i];
+		this[i] = this[j];
+		this[j] = temp;
+	}
+	return this;
+}
