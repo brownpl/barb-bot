@@ -187,7 +187,7 @@ function giveSummary(you, dealer, convo){
 	{
 		convo.say('Yowza! Blackjack! Niiice.');
 	}
-	convo.say('Here are the my cards:');
+	convo.say('Here are my cards:');
 	dealerHand = tallyHand(dealer);
 	convo.say(dealerHand.text + "  ("+dealerHand.score+")");
 	if(dealerHand.score==21)
