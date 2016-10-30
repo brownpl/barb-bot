@@ -1,7 +1,7 @@
 var Botkit = require('botkit')
 
 var token = process.env.SLACK_TOKEN
-var deck; 
+var deck = []; 
 
 var controller = Botkit.slackbot({
 	// reconnect to Slack RTM when connection goes bad
@@ -38,77 +38,184 @@ controller.hears(['work'], ['ambient'], function (bot, message) {
 controller.hears(['girls'], ['ambient'], function (bot, message) {
 	bot.reply(message, ':gg-blanche: :gg-dorothy: :gg-sophia: :gg-rose: Thank you for being a friend :heart:')
 })
-controller.hears(['hello', 'hi'], ['direct_mention'], function (bot, message) {
-	bot.reply(message, 'Hello.')
-})
-
-controller.hears(['hello', 'hi'], ['direct_message'], function (bot, message) {
-	bot.reply(message, 'Hello.')
-	bot.reply(message, 'It\'s nice to talk to you directly.')
-})
-
-controller.hears('.*', ['mention'], function (bot, message) {
-	bot.reply(message, 'You really do care about me. :heart:')
-})
 
 controller.hears('help', ['direct_message', 'direct_mention'], function (bot, message) {
 	var help = 'I will respond to the following messages: \n' +
-			'`bot hi` for a simple message.\n' +
-			'`bot attachment` to see a Slack attachment message.\n' +
-			'`@<your bot\'s name>` to demonstrate detecting a mention.\n' +
-			'`bot help` to see this again.'
+			'`@barb blackjack` will play a game of blackjack.\n' +
+			'`@barb help` to see this again.'
 	bot.reply(message, help)
 })
 
-controller.hears(['attachment'], ['direct_message', 'direct_mention'], function (bot, message) {
-	var text = 'Beep Beep Boop is a ridiculously simple hosting platform for your Slackbots.'
-	var attachments = [{
-		fallback: text,
-		pretext: 'We bring bots to life. :sunglasses: :thumbsup:',
-		title: 'Host, deploy and share your bot in seconds.',
-		image_url: 'https://storage.googleapis.com/beepboophq/_assets/bot-1.22f6fb.png',
-		title_link: 'https://beepboophq.com/',
-		text: text,
-		color: '#7CD197'
-	}]
 
-	bot.reply(message, {
-		attachments: attachments
-	}, function (err, resp) {
-		console.log(err, resp)
-	})
-})
+
+
+controller.hears('blackjack', ['direct_mention'], function(bot, message){
+	createDeck();
+	var you = [];
+	var dealer = [];
+	bot.startConversation(message, function(err, convo) {
+
+		convo.say('So you feel lucky, punk? Ok, here we go....');
+			you.push(deck.pop());
+			you.push(deck.pop());
+			dealer.push(deck.pop());
+			dealer.push(deck.pop());
+			convo.say('Here are your cards:');
+			var hand = '';
+			for(var i=0;i<you.length;i++)
+			{
+				hand += you[i]+" ";
+			} 
+			convo.say(hand);
+
+			convo.say('I have a '+dealer[0]+ ' showing.');
+			convo.ask('What do you want to do? Hit, stay or quit?', [
+					{
+							pattern: 'hit',
+							callback: function(response, convo) {
+									convo.say('One hit, coming up!');
+									you.push(deck.pop());
+									yourHand = tallyHand(you);
+									if(yourHand.score >21)
+									{
+										giveSummary(you, dealer, convo);
+									}
+									else
+									{
+										convo.say(yourHand.text + "  ("+yourHand.score+")");
+										convo.repeat();
+									}
+									convo.next();
+							},
+					},
+					{
+							pattern: 'stay',
+							callback: function(response, convo) {
+									dealerHand = tallyHand(dealer);
+									while(dealerHand.score < 18)
+									{
+										dealer.push(deck.pop());
+										dealerHand = tallyHand(dealer);
+									}
+									giveSummary(you, dealer, convo);
+									convo.next();
+							},
+					},
+					{
+							pattern: 'quit',
+							callback: function(response, convo) {
+								convo.say("No problem. I was going to win anyway.");
+									convo.next();
+							},
+					},
+					{
+							default: true,
+							callback: function(response, convo) {
+									convo.repeat();
+									convo.next();
+							},
+					}
+			]);
+
+			convo.activate();
+	});
+});
 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
 	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
 })
 
-conroller.hears('blackjack', ['direct_mention'], function(bot, message){
-	createDeck();
-
-	var response = "The first 5 cards are:\n";
-	for(var i=0; i<5;i++)
-	{
-		response += deck.pop()+"\n";
-	}
-	bot.reply(message, response);
-
-});
-
-
 function createDeck()
 {
-	var numbers = ['A','1','2','3','4','5','6','7','8','9','10','J','Q','K'];
+	var numbers = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 	var suits = [':hearts:',':clubs:',':spades:',':diamonds:'];
 	for(var i=0; i<suits.length; i++)
 	{
-		for(var j=0; i<numbers.length;j++)
+		for(var j=0; j<numbers.length;j++)
 		{
 			deck.push(suits[i]+numbers[j]);
 		}
 	}
 	deck.shuffle();
 } 
+
+function tallyHand(hand){
+	var text = '';
+	var score =0;
+	var aces =0;
+	for(var i=0;i<hand.length;i++)
+	{
+		text += hand[i]+" ";
+		if(num = hand[i].match(/(\d+)/))
+		{
+			score += Number(num[1]);
+		}
+		else if(num = hand[i].match(/(J|Q|K)$/))
+		{
+			score += 10;
+		}
+		else
+		{
+			aces++;
+		}
+	}
+
+	if(aces>1)
+	{
+		score += aces;
+	}
+	else
+	{
+		if(score+11 > 21)
+		{
+			score +=1;
+		}
+		else 
+		{
+			score += 11;
+		}
+	}
+
+	return { text: text, score: score};
+}
+
+function giveSummary(you, dealer, convo){
+	convo.say('Here are your cards:');
+	yourHand = tallyHand(you);
+	convo.say(yourHand.text+ "  ("+yourHand.score+")");
+	if(yourHand.score==21)
+	{
+		convo.say('Yowza! Blackjack! Niiice.');
+	}
+	convo.say('Here are the my cards:');
+	dealerHand = tallyHand(dealer);
+	convo.say(dealerHand.text + "  ("+dealerHand.score+")");
+	if(dealerHand.score==21)
+	{
+		convo.say('Blackjack! I can\'t be stopped.');
+	}
+
+	if(yourHand.score>21)
+	{
+		convo.say(":boom: YOU BUSTED. lolol.");
+	}
+	else if(dealerHand.score>21)
+	{
+		convo.say(":expressionless: I busted. You got lucky this time.");
+	}
+	else if(yourHand.score == dealerHand.score)
+	{
+		convo.say('Well, I guess we are both amazing. :kissing_heart:');
+	}
+	else if(yourHand.score > dealerHand.score)
+	{
+		convo.say('Congratulations! You beat me! :tada:');
+	}
+	else
+	{
+		convo.say('Better luck next time, loser. :smirk:');
+	}
+}
 
 Array.prototype.shuffle = function() {
 	var i = this.length, j, temp;
