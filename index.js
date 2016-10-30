@@ -164,7 +164,7 @@ function tallyHand(hand){
 	{
 		score += aces;
 	}
-	else
+	else if(aces==1)
 	{
 		if(score+11 > 21)
 		{
