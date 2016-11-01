@@ -1,4 +1,5 @@
 var Botkit = require('botkit')
+var request = require('request');
 
 var token = process.env.SLACK_TOKEN
 var deck = []; 
@@ -42,6 +43,8 @@ controller.hears(['girls'], ['ambient'], function (bot, message) {
 controller.hears('help', ['direct_message', 'direct_mention'], function (bot, message) {
 	var help = 'I will respond to the following messages: \n' +
 			'`@barb blackjack` will play a game of blackjack.\n' +
+			'You can ask @barb for advice, for a fortune or about cats anytime. \n' +
+			'If no other commands match, @barb will give you a meme! (; can be used to split text)\n' +
 			'`@barb help` to see this again.'
 	bot.reply(message, help)
 })
@@ -121,8 +124,63 @@ controller.hears('blackjack', ['direct_mention'], function(bot, message){
 	});
 });
 
-controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
-	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
+controller.hears(['opinion.','think'], ['mention','direct_mention'], function(bot, message){
+	request(
+		{
+			url:'http://ron-swanson-quotes.herokuapp.com/v2/quotes', 
+			json:true
+		}, 
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				bot.reply(message, body[0])
+			}
+		}
+	);
+});
+
+controller.hears(['cat.'], ['mention','direct_mention'], function(bot, message){
+	request(
+		{
+			url:'http://catfacts-api.appspot.com/api/facts', 
+			json:true
+		}, 
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				bot.reply(message, body.facts[0])
+			}
+		}
+	);
+});
+
+
+controller.hears(['advice','fortune'], ['ambient'], function(bot, message){
+	request(
+		{
+			url:'http://api.adviceslip.com/advice', 
+			json:true
+		}, 
+		function (error, response, body) {
+			if (!error && response.statusCode == 200) {
+				bot.reply(message, body.slip.advice)
+			}
+		}
+	);
+});
+
+controller.hears('.*', ['direct_mention'], function (bot, message) {
+	var types = ['afraid', 'older', 'aag', 'tried', 'biw', 'blb', 'kermit', 'bd', 'ch', 'cbg', 'wonka', 'cb', 'keanu', 'dsm', 'live', 'ants', 'doge', 'alwaysonbeat', 'ermg', 'facepalm', 'fwp', 'fa', 'fbf', 'fmr', 'fry', 'ggg', 'hipster', 'icanhas', 'crazypills', 'mw', 'noidea', 'regret', 'boat', 'hagrid', 'sohappy', 'captain', 'inigo', 'iw', 'ackbar', 'happening', 'joker', 'ive', 'll', 'morpheus', 'badchoice', 'mmm', 'jetpack', 'red', 'mordor', 'oprah', 'oag', 'remembers', 'philosoraptor', 'jw', 'patrick', 'sad-obama', 'sad-clinton', 'sadfrog', 'sad-bush', 'sad-biden', 'sad-boehner', 'sarcasticbear', 'dwight', 'sb', 'ss', 'sf', 'dodgson', 'money', 'sohot', 'awesome-awkward', 'awesome', 'awkward-awesome', 'awkward', 'fetch', 'success', 'ski', 'officespace', 'interesting', 'toohigh', 'bs', 'center', 'both', 'winter', 'xy', 'buzz', 'yodawg', 'yuno', 'yallgot', 'bad', 'elf', 'chosen'];
+	var image = 'https://memegen.link/';
+	image += types[Math.floor(Math.random()*types.length)]+"/";
+	if(message.text.match(/;/))
+	{
+		var pieces = message.text.split(';');
+		image += encodeURI(pieces[0].trim())+"/"+encodeURI(pieces[1].trim())+".jpg";
+	}
+	else
+	{
+		image += encodeURI(message.text.trim())+".jpg";
+	}
+	bot.reply(message, image);
 })
 
 function createDeck()
