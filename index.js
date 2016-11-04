@@ -153,7 +153,7 @@ controller.hears(['cat.'], ['mention','direct_mention'], function(bot, message){
 });
 
 
-controller.hears(['advice','fortune'], ['ambient'], function(bot, message){
+controller.hears(['advice'], ['mention','direct_mention'], function(bot, message){
 	request(
 		{
 			url:'http://api.adviceslip.com/advice', 
@@ -171,6 +171,21 @@ controller.hears('.*', ['direct_mention'], function (bot, message) {
 	var types = ['afraid', 'older', 'aag', 'tried', 'biw', 'blb', 'kermit', 'bd', 'ch', 'cbg', 'wonka', 'cb', 'keanu', 'dsm', 'live', 'ants', 'doge', 'alwaysonbeat', 'ermg', 'facepalm', 'fwp', 'fa', 'fbf', 'fmr', 'fry', 'ggg', 'hipster', 'icanhas', 'crazypills', 'mw', 'noidea', 'regret', 'boat', 'hagrid', 'sohappy', 'captain', 'inigo', 'iw', 'ackbar', 'happening', 'joker', 'ive', 'll', 'morpheus', 'badchoice', 'mmm', 'jetpack', 'red', 'mordor', 'oprah', 'oag', 'remembers', 'philosoraptor', 'jw', 'patrick', 'sad-obama', 'sad-clinton', 'sadfrog', 'sad-bush', 'sad-biden', 'sad-boehner', 'sarcasticbear', 'dwight', 'sb', 'ss', 'sf', 'dodgson', 'money', 'sohot', 'awesome-awkward', 'awesome', 'awkward-awesome', 'awkward', 'fetch', 'success', 'ski', 'officespace', 'interesting', 'toohigh', 'bs', 'center', 'both', 'winter', 'xy', 'buzz', 'yodawg', 'yuno', 'yallgot', 'bad', 'elf', 'chosen'];
 	var image = 'https://memegen.link/';
 	image += types[Math.floor(Math.random()*types.length)]+"/";
+	var replacements = {
+		' ':'-',
+		'-':'--',
+		'_':'__',
+		'?':'~q',
+		'%':'~p',
+		'#':'~h',
+		'/':'~s',
+		'"':"''"
+	}
+	foreach(replacements as swap)
+	{ 
+		var regex = new RegExp(swap,"g");	
+		message.replace(regex, replacements[swap])
+	}
 	if(message.text.match(/;/))
 	{
 		var pieces = message.text.split(';');
