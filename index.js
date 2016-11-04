@@ -172,28 +172,28 @@ controller.hears('.*', ['direct_mention'], function (bot, message) {
 	var image = 'https://memegen.link/';
 	image += types[Math.floor(Math.random()*types.length)]+"/";
 	var replacements = {
-		' ':'-',
 		'-':'--',
 		'_':'__',
-		'?':'~q',
+		'\\?':'~q',
 		'%':'~p',
 		'#':'~h',
 		'/':'~s',
 		'"':"''"
 	}
-	foreach(replacements as swap)
+	var text = message.text;
+	for(swap in replacements)
 	{ 
 		var regex = new RegExp(swap,"g");	
-		message.replace(regex, replacements[swap])
+		text = text.replace(regex, replacements[swap])
 	}
-	if(message.text.match(/;/))
+	if(text.match(/;/))
 	{
-		var pieces = message.text.split(';');
+		var pieces = text.split(';');
 		image += encodeURI(pieces[0].trim())+"/"+encodeURI(pieces[1].trim())+".jpg";
 	}
 	else
 	{
-		image += encodeURI(message.text.trim())+".jpg";
+		image += encodeURI(text.trim())+".jpg";
 	}
 	bot.reply(message, image);
 })
