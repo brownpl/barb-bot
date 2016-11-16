@@ -3,6 +3,10 @@ var request = require('request');
 
 var token = process.env.SLACK_TOKEN
 var deck = []; 
+var wheel = [];
+var bets = [];
+var betMode = false; 
+
 
 var controller = Botkit.slackbot({
 	// reconnect to Slack RTM when connection goes bad
@@ -124,6 +128,42 @@ controller.hears('blackjack', ['direct_mention'], function(bot, message){
 	});
 });
 
+controller.hears('roulette', ['direct_mention'], function(bot, message){
+	createRouletteBoard();
+	var bets = [];
+	bot.reply(message, "Alright, place your bets!\nYou can enter a number between 0 and 36, red, black, even or odd.\n(Counting down from 30...)");
+	betMode = true;
+	setTimeout(function(){ 
+		spinWheel(bot, message)
+	}, 30000);
+
+});
+
+controller.hears(['^([0-9]|[12]\d|3[0-6])$','odd','even','black','red'], ['ambient'], function(bot, message){
+	if(betMode)
+	{
+		bot.api.users.info({user: message.user}, function(err, info){
+			bets.push({ bet: message.match.input, value: message.match.input, user: message.user, profile: info.user.profile.real_name });
+		});
+	}
+});
+
+controller.hears('bets', ['direct_mention'], function(bot, message){
+	if(betMode)
+	{
+		var bet_string = '';
+		for(var k=0; k<bets.length; k++)
+		{
+			bet_string += bets[k].profile +' has bet on '+bets[k].bet+"\n";
+		}
+		bot.reply(message, bet_string);
+	}
+	else
+	{
+		bot.reply(message, 'Roulette ain\'t happening right now, dum-dum.');
+	}
+});
+
 controller.hears(['opinion.','think'], ['mention','direct_mention'], function(bot, message){
 	request(
 		{
@@ -197,6 +237,27 @@ controller.hears('.*', ['direct_mention'], function (bot, message) {
 	}
 	bot.reply(message, image);
 })
+
+function createRouletteBoard()
+{
+	var red = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+	for(var i=0; i<=36; i++)
+	{
+		if(i==0)
+		{
+			wheel[i] = { icon: ':green_apple:', number:i, color: 'green' };
+		}
+		else if(red.indexOf(i)>=0)
+		{
+			wheel[i] = { icon: ':red_circle:', number:i, color: 'red' };
+		}
+		else
+		{
+			wheel[i] = { icon: ':black_circle:', number:i, color: 'black' };
+		}
+	}
+	wheel.shuffle();
+} 
 
 function createDeck()
 {
@@ -288,6 +349,46 @@ function giveSummary(you, dealer, convo){
 	{
 		convo.say('Better luck next time, loser. :smirk:');
 	}
+}
+
+function spinWheel(bot, message){
+	bot.reply(message, 'The ball stops on ' + wheel[0].number +' '+ wheel[0].icon);
+	var even = (wheel[0].number % 2)==0;
+	var hasWinner = false;
+	for(var j=0; j<bets.length; j++)
+	{
+		if(bets[j].bet == wheel[0].number)
+		{
+			hasWinner = true;
+			winner(bot, message, bets[j]);
+		}
+		if(bets[j].bet =='even' && even)
+		{
+			hasWinner = true;
+			winner(bot, message, bets[j]);
+		}
+		if(bets[j].bet =='red' && wheel[0].color =='red')
+		{
+			hasWinner = true;
+			winner(bot, message, bets[j]);
+		}
+		if(bets[j].bet =='black' && wheel[0].color=='black')
+		{
+			hasWinner = true;
+			winner(bot, message, bets[j]);
+		}
+	}
+	if(!hasWinner)
+	{
+		bot.reply(message, 'Ha. No one won. Better luck next time, suckers!');
+	}
+	bets = [];
+	betMode = false;
+}
+
+function winner(bot, message, bet)
+{
+	bot.reply(message, ':tada: Congratulations '+bet.profile+'! You won with "'+bet.bet+'"!');
 }
 
 Array.prototype.shuffle = function() {
