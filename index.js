@@ -1,37 +1,20 @@
-var Botkit = require('botkit')
-var request = require('request');
+let { Botkit } = require('botkit');
+const { SlackAdapter } = require('botbuilder-adapter-slack');
+const request = require('request');
 
-var token = process.env.SLACK_TOKEN
 var deck = []; 
 var wheel = [];
 var bets = [];
 var betMode = false; 
 
+const adapter = new SlackAdapter({
+    clientSigningSecret: process.env.SLACK_SECRET,
+    botToken: process.env.SLACK_TOKEN
+});
 
-var controller = Botkit.slackbot({
-	// reconnect to Slack RTM when connection goes bad
-	retry: Infinity,
-	debug: false
-})
-
-// Assume single team mode if we have a SLACK_TOKEN
-if (token) {
-	console.log('Starting in single-team mode')
-	controller.spawn({
-		token: token,
-		retry: Infinity
-	}).startRTM(function (err, bot, payload) {
-		if (err) {
-			throw new Error(err)
-		}
-
-		console.log('Connected to Slack RTM')
-	})
-// Otherwise assume multi-team mode - setup beep boop resourcer connection
-} else {
-	console.log('Starting in Beep Boop multi-team mode')
-	require('beepboop-botkit').start(controller, { debug: true })
-}
+const controller = new Botkit({
+    adapter
+});
 
 controller.on('bot_channel_join', function (bot, message) {
 	bot.reply(message, "I'm here!")
@@ -52,9 +35,6 @@ controller.hears('help', ['direct_message', 'direct_mention'], function (bot, me
 			'`@barb help` to see this again.'
 	bot.reply(message, help)
 })
-
-
-
 
 controller.hears('blackjack', ['direct_mention'], function(bot, message){
 	createDeck();

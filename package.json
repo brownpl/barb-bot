@@ -1,29 +1,22 @@
 {
-  "name": "node-slack-bot",
+  "name": "barb-slackbot",
   "version": "1.0.0",
-  "description": "A sample Beep Boop Node.js Slackbot",
+  "description": "All that and a ball of sass.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/beepboophq/node-slack-bot.git"
   },
   "keywords": [
     "slackbot",
     "bot",
     "slack"
   ],
-  "author": "",
+  "author": "Patrick Brown",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/beepboophq/node-slack-bot/issues"
-  },
-  "homepage": "https://github.com/beepboophq/node-slack-bot#readme",
+  "homepage": "https://patrick-brown.com",
   "dependencies": {
-    "beepboop-botkit": "^1.4.1",
-    "botkit": "~0.2.2",
-    "request": "^2.76.0"
+    "botbuilder-adapter-slack": "^1.0.10",
+    "botkit": "^4.8.1",
+    "request": "^2.88.2"
   }
 }
